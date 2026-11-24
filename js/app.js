@@ -24,10 +24,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Autocomplete e Enter no campo de adicionar produto
+    const addInput = document.getElementById('addProductInput');
+    if (addInput) {
+        addInput.addEventListener('input', onAddInputChange);
+        addInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                fecharAddAutocomplete();
+                adicionarProduto();
+            }
+        });
+    }
+
     // Fechar autocomplete ao clicar fora
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-box')) {
+        if (!e.target.closest('.search-box') && !e.target.closest('.add-product-input')) {
             fecharAutocomplete();
+            fecharAddAutocomplete();
         }
     });
 });
@@ -88,6 +101,63 @@ function fecharAutocomplete() {
 }
 
 // ============================================================
+// AUTOCOMPLETE - Campo Adicionar Produto
+// ============================================================
+let addAutocompleteTimeout = null;
+
+function onAddInputChange(e) {
+    const termo = e.target.value.trim();
+
+    if (addAutocompleteTimeout) clearTimeout(addAutocompleteTimeout);
+
+    if (termo.length < 2) {
+        fecharAddAutocomplete();
+        return;
+    }
+
+    addAutocompleteTimeout = setTimeout(() => {
+        const resultados = buscarProduto(termo).slice(0, 8);
+        mostrarAddAutocomplete(resultados);
+    }, 250);
+}
+
+function mostrarAddAutocomplete(resultados) {
+    let dropdown = document.getElementById('addAutocompleteDropdown');
+    if (!dropdown) {
+        dropdown = document.createElement('div');
+        dropdown.id = 'addAutocompleteDropdown';
+        dropdown.className = 'autocomplete-dropdown';
+        document.querySelector('.add-product-input').appendChild(dropdown);
+    }
+
+    if (resultados.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    dropdown.innerHTML = resultados.map(p => `
+        <div class="autocomplete-item" onclick="selecionarAddAutocomplete('${p.un}', '${p.nome.replace(/'/g, "\\'")}')">
+            <span class="autocomplete-un">UN ${p.un}</span>
+            <span class="autocomplete-nome">${p.nome}</span>
+            <span class="autocomplete-classe">Classe ${p.classe}</span>
+        </div>
+    `).join('');
+
+    dropdown.style.display = 'block';
+}
+
+function selecionarAddAutocomplete(un, nome) {
+    document.getElementById('addProductInput').value = un;
+    fecharAddAutocomplete();
+    adicionarProduto();
+}
+
+function fecharAddAutocomplete() {
+    const dropdown = document.getElementById('addAutocompleteDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+// ============================================================
 // PESQUISA PRINCIPAL
 // ============================================================
 function pesquisar() {
@@ -103,7 +173,7 @@ function pesquisar() {
 
 function exibirResultados(resultados, termo) {
     const container = document.getElementById('resultsContent');
-    const section = document.getElementById('resultsSection');
+    const section = document.getElementById('results');
 
     if (resultados.length === 0) {
         section.style.display = 'block';
@@ -253,7 +323,7 @@ function gerarInfoNR(produto) {
 // CARGA MISTA - Adicionar produtos
 // ============================================================
 function adicionarProduto() {
-    const input = document.getElementById('searchInput');
+    const input = document.getElementById('addProductInput');
     const termo = input.value.trim();
 
     if (!termo) {
@@ -288,12 +358,8 @@ function removerProduto(un) {
 }
 
 function atualizarTagsProdutos() {
-    const container = document.getElementById('selectedProducts');
-    const section = document.getElementById('multiProductSection');
-
-    if (produtosSelecionados.length > 0) {
-        section.style.display = 'block';
-    }
+    const container = document.getElementById('multiProductList');
+    const analyzeBtn = document.getElementById('analyzeBtn');
 
     container.innerHTML = produtosSelecionados.map(p => `
         <span class="product-tag">
@@ -301,6 +367,11 @@ function atualizarTagsProdutos() {
             <button class="tag-remove" onclick="removerProduto('${p.un}')" title="Remover">&times;</button>
         </span>
     `).join('');
+
+    // Habilitar/desabilitar botão de análise
+    if (analyzeBtn) {
+        analyzeBtn.disabled = produtosSelecionados.length < 2;
+    }
 }
 
 // ============================================================
@@ -312,7 +383,7 @@ function analisarCargaMista() {
         return;
     }
 
-    const section = document.getElementById('mixedResultsSection');
+    const section = document.getElementById('mixedResults');
     const container = document.getElementById('mixedResultsContent');
     section.style.display = 'block';
 

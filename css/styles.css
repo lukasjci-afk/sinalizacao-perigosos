@@ -214,6 +214,7 @@ header {
     gap: 0.5rem;
     flex: 1;
     min-width: 250px;
+    position: relative;
 }
 
 .add-product-input input {
