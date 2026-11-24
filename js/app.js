@@ -151,7 +151,10 @@ function criarCardProduto(produto) {
 
     let riscoSubHTML = '';
     if (produto.riscoSub) {
-        riscoSubHTML = `<p><strong>Risco subsidiário:</strong> ${produto.riscoSub}</p>`;
+        const riscoSubStr = Array.isArray(produto.riscoSub) ? produto.riscoSub.join(', ') : produto.riscoSub;
+        if (riscoSubStr) {
+            riscoSubHTML = `<p><strong>Risco subsidiário:</strong> ${riscoSubStr}</p>`;
+        }
     }
 
     return `

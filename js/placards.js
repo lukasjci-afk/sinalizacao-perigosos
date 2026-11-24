@@ -232,7 +232,7 @@ function calcularNumeroRisco(produto) {
 
     // Risco subsidiário
     if (produto.riscoSub) {
-        const subs = produto.riscoSub.split('+');
+        const subs = Array.isArray(produto.riscoSub) ? produto.riscoSub : produto.riscoSub.split('+');
         // Simplificação: adicionar indicador
     }
 
